@@ -8,9 +8,16 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Board {
-    private int id;
+    private Integer id;
     private String title;
     private String content;
-    private int userId;
-    private Timestamp createdAt;
+    private Integer usersId;
+    private Timestamp createdAt; // At 시분초 다 표현할때, Dt 년원일
+
+    public Board(String title, String content, Integer usersId) {
+        this.title = title;
+        this.content = content;
+        this.usersId = usersId;
+    }
+
 }

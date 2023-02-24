@@ -5,24 +5,73 @@
 
 <mapper namespace="shop.mtcoding.paging.model.BoardRepository">
 
+	<select id="paging" resultType="shop.mtcoding.paging.dto.board.BoardResp$PagingDto">
+		SELECT count(*) total_count,  CEILING( count(*) / #{row} ) total_page, #{page} current_page,
+		case when #{page} = 0 then 1
+        	 else 0 
+			 end first,
+		case when #{page} = CEILING( count(*) / #{row} ) - 1 then 1
+			 else 0 
+			 end last
+		FROM board_tb
+		<if test="keyword != null">
+			WHERE title like CONCAT('%',#{keyword},'%')
+		</if>
+	</select>
 
-    <select id="findAll" resultType="shop.mtcoding.paging.model.Board">
-        select * from board_tb
-    </select>
+	<select id="findAll" resultType="shop.mtcoding.paging.dto.board.BoardResp$MainDto">
+		SELECT
+		b.id, b.title, u.username username
+		FROM
+		board_tb b
+		LEFT OUTER JOIN
+		user_tb u
+		ON
+		b.user_id = u.id
+		<if test="keyword != null">
+			WHERE title like CONCAT('%',#{keyword},'%')
+		</if>
+		ORDER BY b.id DESC
+		OFFSET #{startNum} ROWS 
+		FETCH NEXT #{row} ROWS ONLY
+	</select>
 
-    <select id="findById" resultType="shop.mtcoding.paging.model.Board">
-        select * from board_tb where id = #{id}
-    </select>    
+	<insert id="insert">
+		INSERT INTO board_tb(title, content, user_id,
+		createdAt)
+		VALUES(#{title}, #{content}, #{userId},
+		now())
+	</insert>
 
-    <insert id="insert">
-        insert into board_tb (title, content, user_id, created_at) values(#{title}, #{content}, #{userId}, now())
-    </insert>    
+	<select id="findById"
+		resultType="shop.mtcoding.paging.model.Board">
+		SELECT * FROM board_tb WHERE id=#{id}
+	</select>
 
-    <delete id="deleteById" >
-        delete from board_tb where id = #{id} 
-    </delete>    
+	<select id="findByDetail"
+		resultType="shop.mtcoding.paging.dto.board.BoardResp$DetailDto">
+		SELECT 
+		bo.*, 
+		lo.id lovesId , 
+		if(lo.id IS NULL, 0, 1) isLoved,
+		(SELECT COUNT(*) FROM loves WHERE boardsId = #{boardsId}) loveCount
+		FROM board_tb bo 
+		LEFT OUTER JOIN (SELECT * FROM loves WHERE user_id = #{principalId}) lo
+		ON bo.id = lo.boardsId
+		WHERE bo.id = #{boardsId}
+	</select>
 
-    <update id="updateById" >
-        update board_tb set title = #{title}, content = #{content}, where id = #{id} 
-    </update>    
+	<update id="update">
+		UPDATE board_tb SET title = #{title}, content =
+		#{content} WHERE id = #{id}
+	</update>
+
+	<delete id="deleteById">
+		DELETE FROM board_tb WHERE id = #{id}
+	</delete>
+
+	<update id="updateByUsersId">
+		UPDATE board_tb SET user_id = null WHERE user_id =
+		#{usersId}
+	</update>  
 </mapper>
